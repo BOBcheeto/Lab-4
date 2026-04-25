@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uber Demand Forecasting · MIS 432 · WWU</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --black: #000000;
+    --cyan: #1fbad6;
+    --cyan-dim: #0f8fa3;
+    --cyan-glow: rgba(31,186,214,0.15);
+    --white: #ffffff;
+    --gray-1: #0d0d0d;
+    --gray-2: #111111;
+    --gray-3: #1a1a1a;
+    --gray-4: #2a2a2a;
+    --gray-text: #888888;
+    --border: rgba(31,186,214,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── NAV ─────────────────────────────────────────── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0,0,0,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+  }
+
+  .nav-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.72rem;
+    color: var(--gray-text);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--cyan); }
+
+  /* ─── HERO ────────────────────────────────────────── */
+  .hero {
+    padding: 6rem 2rem 4rem;
+    max-width: 900px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--cyan);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 28px;
+    height: 1px;
+    background: var(--cyan);
+  }
+
+  .hero h1 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 span { color: var(--cyan); }
+
+  .hero-meta {
+    font-size: 0.82rem;
+    color: var(--gray-text);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── LAYOUT ──────────────────────────────────────── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem 6rem;
+  }
+
+  /* ─── SECTION ─────────────────────────────────────── */
+  section {
+    padding: 4rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--cyan);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--cyan);
+    border-radius: 50%;
+    font-size: 0.6rem;
+    flex-shrink: 0;
+  }
+
+  h2 {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+  }
+
+  p {
+    color: #cccccc;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    max-width: 72ch;
+  }
+
+  /* ─── CODE / MONO BLOCKS ──────────────────────────── */
+  .code-block {
+    background: var(--gray-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cyan);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    line-height: 1.75;
+    color: #d4d4d4;
+    white-space: pre;
+  }
+
+  .code-block pre .cyan { color: var(--cyan); }
+  .code-block pre .warn { color: #f0c040; }
+  .code-block pre .ok   { color: #4ec94e; }
+
+  /* ─── CHART PLACEHOLDER ───────────────────────────── */
+  .chart-placeholder {
+    background: var(--gray-2);
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .chart-placeholder .placeholder-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .chart-placeholder .placeholder-note {
+    font-size: 0.85rem;
+    color: var(--gray-text);
+  }
+
+  .chart-placeholder img {
+    max-width: 100%;
+    border-radius: 4px;
+    display: none; /* show once image is added */
+  }
+
+  /* ─── MEMO BLOCK ──────────────────────────────────── */
+  .memo-block {
+    background: var(--gray-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .memo-header {
+    background: var(--gray-3);
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--cyan);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .memo-header::before {
+    content: '●';
+    color: var(--cyan);
+    font-size: 0.5rem;
+  }
+
+  .memo-body {
+    padding: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    line-height: 1.9;
+    color: #d4d4d4;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+
+  /* ─── STRESS TEST PLACEHOLDER ─────────────────────── */
+  .finding-block {
+    background: linear-gradient(135deg, var(--gray-2) 0%, #0a1a1e 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.75rem;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .finding-block::before {
+    content: '"';
+    position: absolute;
+    top: -0.5rem;
+    left: 1rem;
+    font-size: 5rem;
+    color: var(--cyan-glow);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .finding-text {
+    font-size: 1rem;
+    color: #cccccc;
+    font-style: italic;
+    padding-left: 0.5rem;
+  }
+
+  /* ─── CALLOUT ─────────────────────────────────────── */
+  .callout {
+    display: flex;
+    gap: 1rem;
+    background: var(--cyan-glow);
+    border: 1px solid rgba(31,186,214,0.35);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    align-items: flex-start;
+  }
+
+  .callout-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    padding-top: 0.1rem;
+  }
+
+  .callout p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #c8edf2;
+  }
+
+  /* ─── HIGHLIGHT STAT ──────────────────────────────── */
+  .stat-row {
+    display: flex;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    background: var(--gray-3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .stat-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--cyan);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--gray-text);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ─── CAPTION ─────────────────────────────────────── */
+  .caption {
+    font-size: 0.82rem;
+    color: var(--gray-text);
+    font-style: italic;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+    padding-left: 0.25rem;
+    border-left: 2px solid var(--border);
+    padding-left: 0.75rem;
+  }
+
+  /* ─── FOOTER ──────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--gray-text);
+    letter-spacing: 0.06em;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  footer span { color: var(--cyan); }
+
+  /* ─── ANIMATIONS ──────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero, section {
+    animation: fadeUp 0.5s ease both;
+  }
+
+  section:nth-child(1) { animation-delay: 0.05s; }
+  section:nth-child(2) { animation-delay: 0.1s; }
+  section:nth-child(3) { animation-delay: 0.15s; }
+
+  /* ─── RESPONSIVE ──────────────────────────────────── */
+  @media (max-width: 600px) {
+    nav { padding: 0 1rem; }
+    .nav-links { display: none; }
+    .hero { padding: 3rem 1rem 2rem; }
+    main { padding: 0 1rem 4rem; }
+    .stat-row { gap: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-brand">MIS 432 · AI in Business · Western Washington University</div>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#model">Model</a></li>
+    <li><a href="#concert">Concert</a></li>
+    <li><a href="#stress">Stress Test</a></li>
+    <li><a href="#ethics">Ethics</a></li>
+    <li><a href="#drift">Drift</a></li>
+    <li><a href="#analysis">Analysis</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO
+════════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="hero-eyebrow">Portfolio Project · Demand Forecasting</div>
+  <h1>How Uber decides how many<br><span>drivers to put on the road</span></h1>
+  <p class="hero-meta">Built in MIS 432 · WWU · Spring 2026 &nbsp;|&nbsp; Linear Regression · Python · Google Colab</p>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════════════════════ -->
+<main>
+
+  <!-- ── SECTION 1 ── THE BUSINESS PROBLEM ────────── -->
+  <section id="problem">
+    <div class="section-label"><span class="section-num">1</span> The Business Problem</div>
+    <h2>Everything runs on the forecast</h2>
+    <p>Uber doesn't own cars or employ drivers — it runs a real-time marketplace where riders who need a trip in the next two minutes need to find a driver who is already nearby and logged in. If Uber underestimates Friday-night demand, riders wait twenty minutes and eventually delete the app; if it overestimates, drivers sit idle and earn nothing, which means they stop turning on the app. Demand forecasting is how Uber solves this before it happens: by predicting exactly how many trips will be requested on a given night in a given neighborhood, Uber can alert the right number of drivers to be online, pre-position them near high-demand areas, and decide whether to raise prices to attract more supply — all automatically, at scale, hours before a single rider opens the app.</p>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-value">424</div>
+        <div class="stat-label">Predicted Friday trips<br>near WWU campus</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">±39</div>
+        <div class="stat-label">Model MAE<br>(6-month holdout)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">163</div>
+        <div class="stat-label">Drivers recommended<br>at 10pm concert exit</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">138</div>
+        <div class="stat-label">Driver supply gap<br>without surge pricing</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2 ── THE DATA AND THE MODEL ────────── -->
+  <section id="model">
+    <div class="section-label"><span class="section-num">2</span> The Data &amp; The Model</div>
+    <h2>Training on two years of Bellingham Fridays</h2>
+    <p>I pulled two years of historical Friday night trip data centered on the WWU campus area in Bellingham, then decomposed it into its underlying signals: a slow upward trend as Uber's local market grew, and clear seasonal patterns — summers quieter, school-year weeks busier, New Year's Eve a sharp outlier. I used those four features (week number, is_summer, is_school_year, is_nye) to train a linear regression model on the first 78 weeks of data, then validated it on the final 26-week holdout to measure honest, out-of-sample error before using it to predict anything real.</p>
+
+    <img src="backtest-chart.png" alt="Friday Night Demand — Backtest Results" style="max-width:100%;border-radius:6px;border:1px solid rgba(31,186,214,0.2);margin:1.5rem 0;display:block;">
+
+    <p class="caption">The dashed line is what the model predicted. The solid line is what actually happened. The gap between them is the model's error — and the honest measure of how much to trust it.</p>
+  </section>
+
+  <!-- ── SECTION 3 ── THE CONCERT NIGHT PREDICTION ──── -->
+  <section id="concert">
+    <div class="section-label"><span class="section-num">3</span> The Concert Night Prediction</div>
+    <h2>From model output to operations memo</h2>
+    <p>Here is the actual operations recommendation the model produced for the Death Cab for Cutie, Sleater-Kinney, and ODESZA homecoming concert at WWU.</p>
+
+    <!-- ══ PASTE YOUR MEMO HERE ══ -->
+    <div class="memo-block">
+      <div class="memo-header">Operations Memo — Output from MIS 432 Linear Regression Model</div>
+      <div class="memo-body"><span class="cyan">=================================================================
+STEP A — CONCERT FRIDAY FEATURE ROW
+=================================================================</span>
+
+  Feature          Value   Plain-English meaning
+─────────────────────────────────────────────────────────────────
+  week_num           105   Next week after our 2-year dataset ends
+                           (correctly extends the growth trend)
+  is_summer            0   Not June–Aug; no summer demand premium
+  is_nye               0   Not New Year's Eve; no NYE surge applied
+  is_school_year       1   WWU in session; +15% student demand boost
+
+  These four values encode everything the model needs to
+  distinguish this Friday from a quiet summer week or a
+  holiday-break Friday.  The concert surge is NOT in the
+  model — we handle that separately in Steps C and D.
+
+<span class="cyan">=================================================================
+STEP B — BASELINE PREDICTION (normal school-year Friday, week 105)
+=================================================================</span>
+
+  Predicted Friday night trips : 424
+  Lower bound  (–15%)          : 360
+  Upper bound  (+15%)          : 488
+
+  ➜  Predicted Friday night trips: 424  (range: 360 to 488)
+
+  Note: this is the BASELINE — a typical school-year Friday
+  near week 105.  The concert effect is layered on top in
+  the driver and surge calculations below.
+
+<span class="cyan">=================================================================
+STEP C — DRIVER RECOMMENDATION
+=================================================================</span>
+
+  Assumption: each driver completes ~3 trips/hour
+              during the post-concert rush (10pm–11pm).
+
+  Scenario          Predicted trips   Drivers needed
+  ──────────────────────────────────────────────────
+  Lower bound             360               120
+  Point estimate          424               141   ← planning baseline
+  Upper bound             488               163   ← recommended target
+
+  ➜  Staff between 120 and 163 drivers online near
+     campus at 10pm.  Target the upper bound (163) to
+     absorb the concert exit without significant surge.
+
+<span class="cyan">=================================================================
+STEP D — SURGE PRICING DECISION
+=================================================================</span>
+
+  Typical drivers online (Bellingham/WWU area): 25
+  Drivers needed at upper bound                : 163
+  Supply gap                                   : 138 drivers short
+
+  <span class="warn">⚠️  Surge recommendation: YES — ACTIVATE SURGE PRICING</span>
+
+  Reason: Upper-bound demand requires 163 drivers but only
+  25 are typically online.  The 138-driver gap means
+  riders exiting the show at 10pm will face meaningful wait
+  times without a pricing signal to pull more drivers online.
+
+<span class="cyan">=================================================================
+OPERATIONS MEMO — UBER BELLINGHAM / WWU AREA
+=================================================================</span>
+
+TO      : Operations Manager
+FROM    : Demand Planning Analyst
+DATE    : April 24, 2026
+RE      : Driver Staffing &amp; Surge Decision — Friday Night Concert (WWU)
+          Death Cab for Cutie / Sleater-Kinney / ODESZA Homecoming Show
+          Show ends: 10:00 PM
+
+─────────────────────────────────────────────────────────────────
+
+PREDICTED DEMAND
+
+  Baseline forecast (school-year Friday, week 105 trend):
+    • Point estimate  : 424 Friday night trips
+    • Planning range  : 360 (low) — 488 (high)
+    • Model MAE       : ±39 trips (validated on 6-month holdout)
+
+DRIVER STAFFING RECOMMENDATION
+
+  Based on ~3 trips per driver per hour during the 10–11pm rush:
+    • Minimum staffing : 120 drivers online near campus at 10pm
+    • Recommended      : 163 drivers  ← target this number
+
+  Action: Send driver pre-positioning push notifications by 9pm Friday.
+  Focus geofence on the PAC/performing arts district and Viking Commons.
+
+SURGE PRICING RECOMMENDATION
+
+  <span class="warn">⚠️  YES — ACTIVATE SURGE PRICING</span>
+
+  Rationale: Upper-bound demand requires 163 drivers; typical supply is 25.
+  Recommended surge window: 9:55pm – 11:15pm.
+
+UPSIDE RISK
+
+  If the show runs late, if multiple large groups are traveling together
+  and splitting into fewer rides, or if a second nearby venue also lets out
+  around 10pm, actual demand could push 15–20% above our upper bound —
+  particularly if outdoor post-show gathering (food trucks, plaza)
+  delays the departure wave and compresses all demand into 20 minutes.
+
+─────────────────────────────────────────────────────────────────
+Forecast generated by: MIS 432 Linear Regression Demand Model (Step 3)
+Backtest MAE: 39.4 trips on 26-week holdout | Features: trend, summer,
+school-year, NYE | Training window: weeks 1–78
+<span class="ok">✅  Step 3 complete.</span></div>
+    </div>
+    <!-- ══════════════════════════════════ -->
+  </section>
+
+  <!-- ── SECTION 4 ── STRESS-TESTING THE FORECAST ──── -->
+  <section id="stress">
+    <div class="section-label"><span class="section-num">4</span> Stress-Testing the Forecast</div>
+    <h2>How fragile is the recommendation?</h2>
+    <p>Before sending that memo, I stress-tested the key assumptions to understand how fragile the recommendation was.</p>
+
+    <!-- ══ PASTE YOUR STRESS TEST FINDING HERE ══ -->
+    <div class="finding-block">
+      <p class="finding-text">No changes flipped it. Changing the Assumption slider had the biggest impact but still didn't flip the recommendation of price surge being active. This shows that the lack of drivers could be a risk, leading to late delays for most of the riders.</p>
+    </div>
+    <!-- ═════════════════════════════════════════ -->
+
+    <p>Stress-testing means deliberately breaking your own assumptions — pushing the trips-per-driver rate lower, shrinking the demand estimate, widening the uncertainty band — and checking whether the core recommendation changes. When no plausible combination of adjustments flips the conclusion, you have real confidence that the memo is defensible, not just a function of cherry-picked inputs. A recommendation that survives adversarial assumptions is one you can actually stand behind in a meeting.</p>
+  </section>
+
+  <!-- ── SECTION 5 ── WHEN THE ALGORITHM DECIDES ────── -->
+  <section id="ethics">
+    <div class="section-label"><span class="section-num">5</span> When the Algorithm Decides</div>
+    <h2>The gap between prediction and decision</h2>
+    <p>In a real Uber deployment, the model's output doesn't land in a human inbox — it feeds directly into the pricing algorithm, which reads the predicted demand number and sets the surge multiplier automatically, with no human review between forecast and price. When the model is right, this is exactly what you want: fast, consistent, city-scale decisions made in milliseconds. When the model is wrong — say, an earthquake has just closed every highway into downtown and demand spikes for reasons the model has never seen — the algorithm still fires, surge pricing still activates, and people trying to evacuate face 4× fares while no one at Uber has yet noticed the signal is broken.</p>
+
+    <div class="callout">
+      <span class="callout-icon">⚡</span>
+      <p>The prediction-decision gap is where AI risk actually lives. The model's error is just a number. The algorithm's response to that error — and the absence of a human circuit-breaker — is what determines real-world harm.</p>
+    </div>
+  </section>
+
+  <!-- ── SECTION 6 ── WHEN THE MODEL BREAKS ────────── -->
+  <section id="drift">
+    <div class="section-label"><span class="section-num">6</span> When the Model Breaks</div>
+    <h2>Distribution shift in Bellingham</h2>
+    <p>Six weeks after the concert, the world the model was trained on quietly ceased to exist: WWU enrollment dropped, new apartment density shifted rider geography toward Cordata, and Lyft entered the Bellingham market for the first time — and the model had no idea any of it happened. It kept predicting 400-plus trips on school-year Fridays because that's what the data said, but the actual market had restructured around it. Drivers earned less per shift than the model-informed incentives promised, riders found themselves waiting longer than Uber's app predicted, and some quietly switched apps — not because anything visibly broke, but because nobody had set up a system to tell the model the world had changed.</p>
+  </section>
+
+  <!-- ── SECTION 7 ── MY ANALYSIS ──────────────────── -->
+  <section id="analysis">
+    <div class="section-label"><span class="section-num">7</span> My Analysis</div>
+    <h2>What I actually learned building this</h2>
+    <p>What you decide early on, like focusing on the school-year effect, basically shapes everything the model does later. Those predictions get tested and adjusted, and eventually they affect real decisions like how many drivers are out and whether surge pricing is turned on. If the early assumptions are off, that error persists and can lead to too many or too few drivers, meaning higher prices for riders or less money for drivers weeks later. And if the system is not monitored well or people lose trust in it, those problems can keep getting worse.</p>
+    <p>If I were building this forecasting system for a real Bellingham business, I would add real-time tracking for concerts or campus events, so the model can adjust to sudden spikes in demand.</p>
+
+    <div class="callout">
+      <span class="callout-icon">🎓</span>
+      <p>Built as part of MIS 432: AI in Business at Western Washington University. All predictions, feature engineering, and the operations memo above reflect original work completed in this course.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════ -->
+<footer>
+  <span>MIS 432 · AI in Business</span> &nbsp;·&nbsp; Western Washington University &nbsp;·&nbsp; Spring 2026<br>
+  Uber Demand Forecasting Lab &nbsp;·&nbsp; Linear Regression · Python · Google Colab
+</footer>
+
+</body>
+</html>
